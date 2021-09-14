@@ -1,0 +1,49 @@
+
+#For each device run 
+smartctl -a <dev> | grep overview
+
+#This will show you what disks are failing.  (I have a script on tastybolt in iava_project that can be run.)
+
+# Now you know what disk is failing do the following
+
+# Lets say /dev/sdb is failing on a RAID 5.
+
+# Get the Serial number from the disk so you know you removed
+# the right one.
+
+hdparm -i /dev/sdb 
+
+# Remove the disk from any arrays it is in.
+# This will show you what partions are in a RAID
+mdadm --misc --detail /dev/md126
+
+#Say it says /dev/sdb2 is part of /dev/md126
+
+mdadm --manage /dev/md126 --fail /dev/sdb2
+mdadm --manage /dev/md126 --remove /dev/sdb2
+mdadm --misc --detail /dev/md126
+
+# When you run the detail it should show the sdb partition as removed
+# Do the above for all raid drives.  And remove any partitions
+# from sdb from them.
+
+# Shutdown the system and remove the failed drive and replace it.
+# Reboot the system.
+
+# Note sgdisk is installed with yum install gdisk.
+#Copy the partition table from a good disk to the newly replaced disk
+sgdisk -R /dev/sdb /dev/sda
+# Now update the UUID for the new drive in the partition table
+sgdisk -G /dev/sdb
+
+# Now add the new disk back into the RAID partitions
+mdadm --manage /dev/md126 --add /dev/sdb2
+# Do this for all the raid drives.
+
+# When you run
+
+mdadm --misc --detail /dev/md126
+
+
+# You should see that the new drive is added and is rebuilding.
+

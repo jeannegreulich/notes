@@ -1,0 +1,24 @@
+Redhat says you ned to disable mcafee when using podman
+
+
+sudo yum module enable -y container-tools:rhel8
+sudo yum module install -y container-tools:rhel8
+
+edit /etc/subuid and /etc/subgid and add line:
+
+<username>:100000:65536
+
+add this line to both files.
+
+check your ~/.config/containers/storage.conf
+
+[storage]
+  driver="overlay"
+  graphroot = "/var/jmg/podman/containers/storage"
+  rootless_storage_path="/var/jmg/podman/containers/storage"
+[storage.options.overlay]
+  mount_program = "/usr/bin/fuse-overlayfs"
+
+make sure the graphroot dir exists:
+
+mkdir -p /var/jmg/podman/containers/storage
